@@ -94,6 +94,8 @@ export function selectBuiltinToolsForRun(options: {
   emailInbox?: boolean;
   /** This server receives email and the bot has no address yet. */
   emailClaimable?: boolean;
+  /** The inbox may be read and this server can send email. */
+  emailSend?: boolean;
 }) {
   const disabled = disabledBuiltinToolSet(options.disabledBuiltinTools);
   const ownerStartedRun = isOwnerStartedRun(options.trigger, Boolean(options.followUpFromUser));
@@ -136,6 +138,7 @@ export function selectBuiltinToolsForRun(options: {
         ].includes(tool.name)) &&
       (options.voiceCall || tool.name !== "end_call") &&
       (options.emailInbox || !EMAIL_INBOX_TOOL_NAMES.has(tool.name)) &&
+      ((options.emailInbox && options.emailSend) || tool.name !== "send_email") &&
       ((options.emailClaimable &&
         ownerStartedRun &&
         !options.groupId &&
