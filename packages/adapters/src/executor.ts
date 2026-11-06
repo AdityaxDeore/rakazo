@@ -1370,10 +1370,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const emailName = deps.inboundEmailDomain
           ? await deps.prisma.botEmailAddress.findUnique({
               where: { botId: bot.id },
-              select: { localPart: true },
+              select: { name: true },
             })
           : null;
-        const botEmail = emailName ? `${emailName.localPart}@${deps.inboundEmailDomain}` : null;
+        const botEmail = emailName ? `${emailName.name}@${deps.inboundEmailDomain}` : null;
         // The inbox is the owner's mail: read only in their own runs, never in a group or channel.
         const emailInbox =
           Boolean(botEmail) && run.userId === bot.userId && !thread.groupId && !nonOwnerChatRun;
@@ -1905,7 +1905,13 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               instructions: userTurnInstructions({
                 botInstructions: [
                   runIdentityInstruction(bot, run.trigger),
-                  botEmail ? botEmailInstruction(botEmail, emailInbox) : "",
+                  botEmail
+                    ? botEmailInstruction(botEmail, {
+                        // Only the tools this bot has: its owner may turn either off.
+                        read: emailInbox && !disabledBuiltinTools.has("read_email"),
+                        delete: emailInbox && !disabledBuiltinTools.has("delete_email"),
+                      })
+                    : "",
                 ]
                   .filter(Boolean)
                   .join("\n"),
